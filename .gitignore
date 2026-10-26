@@ -1,0 +1,27 @@
+
+# 1. Bỏ qua các file và thư mục build rác (Rất quan trọng)
+build/
+**/build/
+.gradle/
+**/.gradle/
+.kotlin/
+**/.kotlin/
+captures/
+.externalNativeBuild/
+.cxx/
+*.iml
+
+# 2. Bỏ qua cấu hình riêng của máy tính (chứa đường dẫn ổ đĩa cá nhân)
+local.properties
+**/local.properties
+
+# 3. Bỏ qua toàn bộ cài đặt của IDE (Android Studio / VS Code)
+.idea/
+**/.idea/
+.vscode/
+*.ipr
+*.iws
+
+# 4. File rác hệ điều hành
+.DS_Store
+Thumbs.db
