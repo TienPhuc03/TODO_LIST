@@ -1,8 +1,7 @@
-package com.example.btvn_tuan4
+package com.example.btvn_tuan4.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -18,61 +17,58 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.btvn_tuan4.model.OnBoardingIllustration
 
+// Logo UTH Todo thu gon hoac day du
 @Composable
-fun UthTodoLogo (
-    modifier: Modifier = Modifier, isSmall: Boolean = false
-){
+fun UthTodoLogo(
+    modifier: Modifier = Modifier,
+    isSmall: Boolean = false
+) {
     val boxSize = if (isSmall) 32.dp else 90.dp
     val cornerRadius = if (isSmall) 8.dp else 22.dp
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .size(boxSize)
             .clip(RoundedCornerShape(cornerRadius))
             .background(Color.White),
         contentAlignment = Alignment.Center
-    ){
+    ) {
         Column(
-            modifier = Modifier
-                .padding(if (isSmall) 4.dp else 16.dp),
+            modifier = Modifier.padding(if (isSmall) 4.dp else 16.dp),
             verticalArrangement = Arrangement.spacedBy(if (isSmall) 3.dp else 8.dp)
         ) {
-            //da hoan thanh
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            // Dong da hoan thanh
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     modifier = Modifier
-                        .size (if (isSmall) 6.dp else 16.dp)
+                        .size(if (isSmall) 6.dp else 16.dp)
                         .clip(CircleShape)
                         .background(UthColors.Primary)
                 )
-                 Spacer(modifier = Modifier.width(if (isSmall) 3.dp else 8.dp))
-
+                Spacer(modifier = Modifier.width(if (isSmall) 3.dp else 8.dp))
                 Box(
                     modifier = Modifier
-                        .width( if  (isSmall) 14.dp else 36.dp)
+                        .width(if (isSmall) 14.dp else 36.dp)
                         .height(if (isSmall) 2.dp else 6.dp)
                         .clip(RoundedCornerShape(3.dp))
                         .background(UthColors.Primary)
                 )
             }
-            repeat(2){
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+            // Cac dong chua hoan thanh
+            repeat(2) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         modifier = Modifier
-                            .size (if (isSmall) 6.dp else 16.dp)
+                            .size(if (isSmall) 6.dp else 16.dp)
                             .clip(CircleShape)
                             .background(UthColors.Primary)
                     )
                     Spacer(modifier = Modifier.width(if (isSmall) 3.dp else 8.dp))
-
                     Box(
                         modifier = Modifier
-                            .width( if  (isSmall) 14.dp else 36.dp)
+                            .width(if (isSmall) 14.dp else 36.dp)
                             .height(if (isSmall) 2.dp else 6.dp)
                             .clip(RoundedCornerShape(3.dp))
                             .background(UthColors.Primary)
@@ -83,19 +79,22 @@ fun UthTodoLogo (
     }
 }
 
-//ve da hinh tuy vao loai srceen con de ve hinh tuong ung
+// Ve hinh minh hoa theo kieu da hinh cua OnBoardingIllustration
 @Composable
-fun RenderIllustration (Illustration: OnBoardingIllustration, modifier: Modifier = Modifier) {
+fun RenderIllustration(
+    Illustration: OnBoardingIllustration,
+    modifier: Modifier = Modifier
+) {
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .height(280.dp)
             .clip(RoundedCornerShape(24.dp))
             .background(UthColors.SurfaceCard),
         contentAlignment = Alignment.Center
     ) {
-        when (Illustration){
-            //khung the srceen 1
+        when (Illustration) {
+            // Hinh minh hoa buoc 1: Checklist cong viec
             is OnBoardingIllustration.ChecklistIllustration -> {
                 Box(
                     modifier = Modifier
@@ -104,13 +103,9 @@ fun RenderIllustration (Illustration: OnBoardingIllustration, modifier: Modifier
                         .background(Color.White)
                         .padding(18.dp)
                 ) {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(14.dp)
-                    ) {
-                        Illustration.tasks.forEach {  task ->
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                        Illustration.tasks.forEach { task ->
+                            Row(verticalAlignment = Alignment.CenterVertically) {
                                 Box(
                                     modifier = Modifier
                                         .size(24.dp)
@@ -118,7 +113,7 @@ fun RenderIllustration (Illustration: OnBoardingIllustration, modifier: Modifier
                                         .background(if (task.isChecked) UthColors.Primary else Color(0xFFE2E8F0)),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    if (task.isChecked){
+                                    if (task.isChecked) {
                                         Icon(
                                             imageVector = Icons.Default.Check,
                                             contentDescription = null,
@@ -133,29 +128,28 @@ fun RenderIllustration (Illustration: OnBoardingIllustration, modifier: Modifier
                                         .fillMaxWidth()
                                         .height(10.dp)
                                         .clip(RoundedCornerShape(5.dp))
-                                        .background(if  (task.isChecked) Color(0xFFE2E8F0) else Color(0xFFF1F5F9))
+                                        .background(if (task.isChecked) Color(0xFFE2E8F0) else Color(0xFFF1F5F9))
                                 )
                             }
                         }
                     }
                 }
             }
+            // Hinh minh hoa buoc 2: The danh muc
             is OnBoardingIllustration.CategoryIllustration -> {
-                //khung the chua srceen 2
                 Box(
                     modifier = Modifier
                         .width(220.dp)
                         .clip(RoundedCornerShape(16.dp))
                         .background(Color.White)
-                        .padding( vertical = 24.dp , horizontal = 18.dp)
+                        .padding(vertical = 24.dp, horizontal = 18.dp)
                 ) {
                     Column(
                         modifier = Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Illustration.categories.forEach {
-                            categoryItem ->
+                        Illustration.categories.forEach { categoryItem ->
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -175,8 +169,8 @@ fun RenderIllustration (Illustration: OnBoardingIllustration, modifier: Modifier
                     }
                 }
             }
+            // Hinh minh hoa buoc 3: The nhac nho chuong bao
             is OnBoardingIllustration.ReminderIllustration -> {
-                //khung the srceen 3
                 Box(
                     modifier = Modifier
                         .width(220.dp)
@@ -185,9 +179,7 @@ fun RenderIllustration (Illustration: OnBoardingIllustration, modifier: Modifier
                         .padding(vertical = 28.dp, horizontal = 16.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Box(
                             modifier = Modifier
                                 .size(56.dp)
@@ -203,13 +195,11 @@ fun RenderIllustration (Illustration: OnBoardingIllustration, modifier: Modifier
                             )
                         }
                         Spacer(modifier = Modifier.height(18.dp))
-
-                        //the nhac nho
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(8.dp))
                                 .background(Color(0xFFF8FAFC))
-                                .padding(horizontal = 14.dp , vertical = 8.dp)
+                                .padding(horizontal = 14.dp, vertical = 8.dp)
                         ) {
                             Text(
                                 text = "${Illustration.title} lúc ${Illustration.time}",
@@ -225,22 +215,26 @@ fun RenderIllustration (Illustration: OnBoardingIllustration, modifier: Modifier
     }
 }
 
+// Thanh cham chi bao so buoc
 @Composable
-fun StepIndicator (currentStep: Int, totalSteps: Int, modifier: Modifier = Modifier){
+fun StepIndicator(
+    currentStep: Int,
+    totalSteps: Int,
+    modifier: Modifier = Modifier
+) {
     Row(
-        modifier = Modifier,
+        modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        for ( i in 1..totalSteps){
+        for (i in 1..totalSteps) {
             val isActive = i == currentStep
-            Box (
+            Box(
                 modifier = Modifier
-                    .size (width = if (isActive) 16.dp else 6.dp, height = 6.dp)
+                    .size(width = if (isActive) 16.dp else 6.dp, height = 6.dp)
                     .clip(RoundedCornerShape(3.dp))
-                    .background(if(isActive) UthColors.Primary else UthColors.DotInactive )
+                    .background(if (isActive) UthColors.Primary else UthColors.DotInactive)
             )
         }
     }
 }
-

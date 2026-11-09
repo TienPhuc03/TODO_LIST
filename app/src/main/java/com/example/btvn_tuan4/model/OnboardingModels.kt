@@ -1,15 +1,16 @@
-package com.example.btvn_tuan4
+package com.example.btvn_tuan4.model
 
 import androidx.compose.ui.graphics.Color
 
-//dong goi thong tin
-data class AppMetaData (
+// Dong goi thong tin ung dung
+data class AppMetaData(
     val name: String,
     val slogan: String,
     val version: String
 )
-// sealed interface cho tinh da hinh cua cac thong tren 3 srceen
-sealed interface OnBoardingIllustration{
+
+// Sealed interface da hinh cho hinh minh hoa onboarding
+sealed interface OnBoardingIllustration {
     data class ChecklistIllustration(
         val tasks: List<TaskItem>
     ) : OnBoardingIllustration
@@ -22,22 +23,22 @@ sealed interface OnBoardingIllustration{
         val title: String,
         val time: String
     ) : OnBoardingIllustration
-
 }
 
+// Item cong viec checklist
 data class TaskItem(
-    val isChecked: Boolean,
+    val isChecked: Boolean
 )
 
+// Item the danh muc
 data class CategoryItem(
     val label: String,
     val textColor: Color,
     val backgroundColor: Color
 )
 
-
-//dong goi toan bo thong tin tren 3 screen
-data class OnBoardingStep (
+// Dong goi thong tin moi buoc onboarding
+data class OnBoardingStep(
     val stepNumber: Int,
     val title: String,
     val description: String,

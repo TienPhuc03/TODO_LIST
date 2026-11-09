@@ -1,4 +1,4 @@
-package com.example.btvn_tuan4
+package com.example.btvn_tuan4.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -16,25 +16,34 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.btvn_tuan4.model.AppMetaData
+import com.example.btvn_tuan4.model.OnBoardingStep
+import com.example.btvn_tuan4.repository.OnboardingRepository
+import com.example.btvn_tuan4.ui.components.RenderIllustration
+import com.example.btvn_tuan4.ui.components.StepIndicator
+import com.example.btvn_tuan4.ui.components.UthColors
+import com.example.btvn_tuan4.ui.components.UthTodoLogo
 
+// Man hinh khoi dong Splash
 @Composable
 fun StartSplashScreen(
     appMetadata: AppMetaData,
     onNavigateNext: () -> Unit
 ) {
-    //tu dong chuyen man hinh sau 2.5s
+    // Tu dong chuyen man hinh sau 3s
     LaunchedEffect(Unit) {
-        delay(5000)
+        delay(3000)
         onNavigateNext()
     }
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(UthColors.Primary)
+            .statusBarsPadding()
+            .navigationBarsPadding()
             .clickable { onNavigateNext() }
             .padding(24.dp)
     ) {
-
         Column(
             modifier = Modifier.align(Alignment.Center),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -66,7 +75,8 @@ fun StartSplashScreen(
         )
     }
 }
-//man hinh dung chung
+
+// Man hinh Onboarding dung chung
 @Composable
 fun OnboardingScreen(
     step: OnBoardingStep,
@@ -77,11 +87,12 @@ fun OnboardingScreen(
     Scaffold(
         containerColor = UthColors.Background,
         topBar = {
-            //thanh topbar
+            // Thanh tieu de tren co dem an toan
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 16.dp),
+                    .statusBarsPadding()
+                    .padding(horizontal = 24.dp, vertical = 14.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -109,12 +120,14 @@ fun OnboardingScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 24.dp, vertical = 20.dp),
+                .navigationBarsPadding()
+                .padding(horizontal = 24.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            //khoi tao hinh anh
+            // Hinh minh hoa cho tung buoc
             RenderIllustration(Illustration = step.illustration)
-            //tieu de + noi dung + cham nut
+
+            // Noi dung huong dan va cham chi bao
             Column {
                 Text(
                     text = step.title,
@@ -131,10 +144,11 @@ fun OnboardingScreen(
                     lineHeight = 20.sp
                 )
                 Spacer(modifier = Modifier.height(24.dp))
-                // Chỉ báo 3 chấm
+                // Cham chi bao vi tri buoc hien tai
                 StepIndicator(currentStep = step.stepNumber, totalSteps = totalSteps)
             }
-            //nut chuyen sang man hinh tiep theo
+
+            // Nut chuyen tiep sang buoc tiep theo
             Button(
                 onClick = onNext,
                 modifier = Modifier
@@ -154,8 +168,7 @@ fun OnboardingScreen(
     }
 }
 
-
-
+// Preview man hinh Splash
 @Preview(showBackground = true, showSystemUi = true, name = "1. Start Screen")
 @Composable
 fun StartScreenPreview() {
@@ -168,7 +181,7 @@ fun StartScreenPreview() {
     }
 }
 
-
+// Preview Onboarding buoc 1
 @Preview(showBackground = true, showSystemUi = true, name = "2. Onboarding - Bước 1")
 @Composable
 fun OnboardingStep1Preview() {
@@ -184,7 +197,7 @@ fun OnboardingStep1Preview() {
     }
 }
 
-
+// Preview Onboarding buoc 2
 @Preview(showBackground = true, showSystemUi = true, name = "3. Onboarding - Bước 2")
 @Composable
 fun OnboardingStep2Preview() {
@@ -200,7 +213,7 @@ fun OnboardingStep2Preview() {
     }
 }
 
-
+// Preview Onboarding buoc 3
 @Preview(showBackground = true, showSystemUi = true, name = "4. Onboarding - Bước 3")
 @Composable
 fun OnboardingStep3Preview() {

@@ -1,21 +1,27 @@
-package com.example.btvn_tuan4
+package com.example.btvn_tuan4.repository
 
+import com.example.btvn_tuan4.model.*
+import com.example.btvn_tuan4.ui.components.UthColors
 
-
-interface IOnboardingRepository{
+// Interface kho du lieu onboarding
+interface IOnboardingRepository {
     fun getAppMetaData(): AppMetaData
     fun getOnBoardingSteps(): List<OnBoardingStep>
     fun getOnBoardingStep(stepIndex: Int): OnBoardingStep?
     fun getTotalSteps(): Int
 }
 
-class OnboardingRepository : IOnboardingRepository{
+// Trien khai kho du lieu onboarding
+class OnboardingRepository : IOnboardingRepository {
+
+    // Thong tin ung dung
     private val appMetaData = AppMetaData(
         name = "UTH Todo",
         slogan = "Việc học, việc nhà - gọn gàng mỗi ngày",
         version = "2.0.0.6"
     )
 
+    // Danh sach 3 buoc onboarding
     private val steps = listOf(
         OnBoardingStep(
             stepNumber = 1,
@@ -26,12 +32,11 @@ class OnboardingRepository : IOnboardingRepository{
                 tasks = listOf(
                     TaskItem(isChecked = true),
                     TaskItem(isChecked = false),
-                    TaskItem(isChecked = false),
+                    TaskItem(isChecked = false)
                 )
             ),
             isLastStep = false
         ),
-
         OnBoardingStep(
             stepNumber = 2,
             title = "Chia theo Học tập và Cuộc sống",
@@ -64,7 +69,6 @@ class OnboardingRepository : IOnboardingRepository{
             ),
             isLastStep = true
         )
-
     )
 
     override fun getAppMetaData(): AppMetaData = appMetaData
@@ -72,4 +76,3 @@ class OnboardingRepository : IOnboardingRepository{
     override fun getOnBoardingStep(stepIndex: Int): OnBoardingStep? = steps.getOrNull(stepIndex)
     override fun getTotalSteps(): Int = steps.size
 }
-
