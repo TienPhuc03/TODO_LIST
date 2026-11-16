@@ -30,6 +30,8 @@ import androidx.compose.ui.unit.sp
 import com.example.btvn_tuan4.model.AuthUser
 import com.example.btvn_tuan4.model.SubTask
 import com.example.btvn_tuan4.model.TodoTask
+import com.example.btvn_tuan4.notification.computeReminderAt
+import com.example.btvn_tuan4.notification.formatReminderTime
 import com.example.btvn_tuan4.repository.FirestoreTaskRepository
 import com.example.btvn_tuan4.repository.ITaskRepository
 import com.example.btvn_tuan4.ui.components.UthColors
@@ -346,7 +348,9 @@ fun TaskDetailScreen(
                             )
                         }
                         Text(
-                            text = if (currentTask.remindMe) "Trước 15 phút" else "Không nhắc",
+                            text = if (!currentTask.remindMe) "Không nhắc" else
+                                computeReminderAt(currentTask.date, currentTask.time)
+                                    ?.let { "Lúc ${formatReminderTime(it)}" } ?: "Không rõ hạn",
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                             color = UthColors.TextPrimary

@@ -3,6 +3,10 @@ package com.example.btvn_tuan4.model
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.google.firebase.firestore.PropertyName
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
+import java.util.TimeZone
 
 // Model thong tin nguoi dung
 data class AuthUser(
@@ -115,6 +119,7 @@ data class TodoTask(
     // Kiem tra cong viec co thuoc danh sach "Viec hom nay" tren Trang chu
     val isToday: Boolean
         get() = date == "2026-10-20" ||
+                date == isoDate(0) ||
                 date.contains("Hôm nay", ignoreCase = true) ||
                 date.contains("20/10")
 
@@ -122,8 +127,8 @@ data class TodoTask(
     val displayDeadline: String
         get() {
             val dayLabel = when {
-                date == "2026-10-20" || date.contains("Hôm nay", ignoreCase = true) -> "Hôm nay"
-                date == "2026-10-21" || date.contains("Ngày mai", ignoreCase = true) -> "Ngày mai"
+                date == "2026-10-20" || date == isoDate(0) || date.contains("Hôm nay", ignoreCase = true) -> "Hôm nay"
+                date == "2026-10-21" || date == isoDate(1) || date.contains("Ngày mai", ignoreCase = true) -> "Ngày mai"
                 date == "2026-10-24" || date == "2026-10-25" || date.contains("Tuần này", ignoreCase = true) -> "Tuần này"
                 else -> date
             }
@@ -148,6 +153,13 @@ data class TodoTask(
     }
 
     companion object {
+        // Ngay that "yyyy-MM-dd" theo gio VN, lech offsetDays so voi hom nay (ngay mau 20/10 van giu nguyen)
+        fun isoDate(offsetDays: Int): String {
+            val tz = TimeZone.getTimeZone("Asia/Ho_Chi_Minh")
+            val cal = Calendar.getInstance(tz).apply { add(Calendar.DAY_OF_YEAR, offsetDays) }
+            return SimpleDateFormat("yyyy-MM-dd", Locale.US).apply { timeZone = tz }.format(cal.time)
+        }
+
         // Chuyen doi ma category tu API sang tieng Viet
         fun categoryFromApi(raw: String): String {
             return if (raw.equals("life", ignoreCase = true) || raw == "Cuộc sống") "Cuộc sống" else "Học tập"

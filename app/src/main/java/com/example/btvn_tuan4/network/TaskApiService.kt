@@ -1,6 +1,7 @@
 package com.example.btvn_tuan4.network
 
 import android.util.Log
+import com.example.btvn_tuan4.BuildConfig
 import com.example.btvn_tuan4.model.SubTask
 import com.example.btvn_tuan4.model.TodoTask
 import kotlinx.coroutines.Dispatchers
@@ -15,8 +16,9 @@ import java.net.URL
 
 object TaskApiService {
 
-    const val BASE_URL = "https://share.tryapps.store/mock/teach"
-    const val API_TOKEN = "TuanTruong-uth-student"
+    // Doc tu local.properties qua BuildConfig, khong hard-code trong source
+    private val BASE_URL = BuildConfig.TASKS_API_BASE_URL
+    private val API_TOKEN = BuildConfig.TASKS_API_TOKEN
 
     private const val TIMEOUT_MS = 10000
 

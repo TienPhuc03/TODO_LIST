@@ -1,5 +1,7 @@
 package com.example.btvn_tuan4.ui.screens
 
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -32,6 +34,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.btvn_tuan4.model.AuthUser
 import com.example.btvn_tuan4.model.TodoTask
+import com.example.btvn_tuan4.notification.VN_TIME_ZONE
+import com.example.btvn_tuan4.notification.computeReminderAt
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 import com.example.btvn_tuan4.repository.FirestoreTaskRepository
 import com.example.btvn_tuan4.repository.ITaskRepository
 import com.example.btvn_tuan4.ui.components.UthColors
@@ -379,18 +386,40 @@ fun AddTaskBottomSheet(
     var taskTitle by rememberSaveable { mutableStateOf(initialTask?.title ?: "") }
     var taskNote by rememberSaveable { mutableStateOf(initialTask?.note ?: "") }
     var selectedCategory by rememberSaveable { mutableStateOf(initialTask?.displayCategory ?: "Học tập") }
-    var taskDate by rememberSaveable { mutableStateOf(initialTask?.date ?: "2026-10-20") }
-    var taskTime by rememberSaveable { mutableStateOf(initialTask?.time ?: "19:00") }
+    val context = LocalContext.current
+    // Viec moi mac dinh la 1 gio toi (lam tron gio); nguoi dung tu chon lai ngay va gio bang picker
+    val defaultDeadline = remember { Calendar.getInstance(VN_TIME_ZONE).apply { add(Calendar.HOUR_OF_DAY, 1); set(Calendar.MINUTE, 0) } }
+    var taskDate by rememberSaveable { mutableStateOf(initialTask?.date ?: formatIsoDate(defaultDeadline)) }
+    var taskTime by rememberSaveable { mutableStateOf(initialTask?.time ?: formatTime(defaultDeadline)) }
     var remindMe by rememberSaveable { mutableStateOf(initialTask?.remindMe ?: true) }
     var selectedPriority by rememberSaveable { mutableStateOf(initialTask?.displayPriorityShort ?: "Vừa") }
     val scrollState = rememberScrollState()
 
-    val datePresets = listOf(
-        "2026-10-20" to "Hôm nay, 20/10",
-        "2026-10-21" to "Ngày mai, 21/10",
-        "2026-10-24" to "Tuần này, 24/10"
-    )
-    val timePresets = listOf("06:30", "09:00", "14:00", "17:30", "19:00", "21:00")
+    // Mo hop thoai chon ngay cua he thong, khong cho chon ngay trong qua khu
+    fun openDatePicker() {
+        val cal = deadlineCalendar(taskDate, taskTime)
+        DatePickerDialog(
+            context,
+            { _, year, month, day -> taskDate = String.format(Locale.US, "%04d-%02d-%02d", year, month + 1, day) },
+            cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)
+        ).apply { datePicker.minDate = System.currentTimeMillis() - 1000 }.show()
+    }
+
+    // Mo hop thoai chon gio (24h); gio da qua thi canh bao vi se khong nhac duoc
+    fun openTimePicker() {
+        val cal = deadlineCalendar(taskDate, taskTime)
+        TimePickerDialog(
+            context,
+            { _, hour, minute ->
+                taskTime = String.format(Locale.US, "%02d:%02d", hour, minute)
+                val deadline = computeReminderAt(taskDate, taskTime, leadMinutes = 0)
+                if (deadline != null && deadline <= System.currentTimeMillis()) {
+                    Toast.makeText(context, "Thời điểm này đã qua, công việc sẽ không được nhắc", Toast.LENGTH_SHORT).show()
+                }
+            },
+            cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), true
+        ).show()
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -598,15 +627,11 @@ fun AddTaskBottomSheet(
                     Column(
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
                     ) {
-                        // Dong Ngay (bam de chuyen doi nhanh giua Hom nay / Ngay mai / Tuan nay)
+                        // Dong Ngay (bam de mo lich chon ngay)
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable {
-                                    val currentIndex = datePresets.indexOfFirst { it.first == taskDate }
-                                    val nextIndex = (currentIndex + 1) % datePresets.size
-                                    taskDate = datePresets[nextIndex].first
-                                }
+                                .clickable { openDatePicker() }
                                 .padding(vertical = 10.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
@@ -628,7 +653,7 @@ fun AddTaskBottomSheet(
                                     color = Color(0xFF1E293B)
                                 )
                             }
-                            val displayDateLabel = datePresets.find { it.first == taskDate }?.second ?: taskDate
+                            val displayDateLabel = dateLabel(taskDate)
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(8.dp))
@@ -646,15 +671,11 @@ fun AddTaskBottomSheet(
 
                         HorizontalDivider(color = Color(0xFFF8FAFC), thickness = 1.dp)
 
-                        // Dong Gio (bam de doi nhanh mốc giờ)
+                        // Dong Gio (bam de mo dong ho chon gio)
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable {
-                                    val currentIndex = timePresets.indexOf(taskTime)
-                                    val nextIndex = (currentIndex + 1) % timePresets.size
-                                    taskTime = timePresets[nextIndex]
-                                }
+                                .clickable { openTimePicker() }
                                 .padding(vertical = 10.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
@@ -1082,5 +1103,31 @@ fun HomeScreenPreview() {
             ),
             onNavigateToProfile = {}
         )
+    }
+}
+
+private fun formatIsoDate(cal: Calendar): String =
+    SimpleDateFormat("yyyy-MM-dd", Locale.US).apply { timeZone = VN_TIME_ZONE }.format(cal.time)
+
+private fun formatTime(cal: Calendar): String =
+    SimpleDateFormat("HH:mm", Locale.US).apply { timeZone = VN_TIME_ZONE }.format(cal.time)
+
+// Calendar (gio VN) tu han chot dang luu; du lieu cu khong doc duoc (vd "Hôm nay") thi lay thoi diem hien tai
+private fun deadlineCalendar(date: String, time: String): Calendar {
+    val cal = Calendar.getInstance(VN_TIME_ZONE)
+    computeReminderAt(date, time.ifBlank { "00:00" }, leadMinutes = 0)?.let { cal.timeInMillis = it }
+    return cal
+}
+
+// Nhan hien thi ngay: "Hôm nay, 16/11", "Ngày mai, 17/11" hoac "20/11/2026"
+private fun dateLabel(date: String): String {
+    val cal = computeReminderAt(date, "00:00", leadMinutes = 0)
+        ?.let { ms -> Calendar.getInstance(VN_TIME_ZONE).apply { timeInMillis = ms } }
+        ?: return date
+    val short = SimpleDateFormat("dd/MM", Locale.US).apply { timeZone = VN_TIME_ZONE }.format(cal.time)
+    return when (date) {
+        TodoTask.isoDate(0) -> "Hôm nay, $short"
+        TodoTask.isoDate(1) -> "Ngày mai, $short"
+        else -> SimpleDateFormat("dd/MM/yyyy", Locale.US).apply { timeZone = VN_TIME_ZONE }.format(cal.time)
     }
 }

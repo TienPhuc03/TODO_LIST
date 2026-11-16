@@ -1,8 +1,14 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
 // Add the Google services Gradle plugin
     id("com.google.gms.google-services")
+}
+
+val localProps = Properties().apply {
+    rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
 }
 
 android {
@@ -19,6 +25,13 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Thong tin REST API doc tu local.properties (khong commit), xem README
+        buildConfigField(
+            "String", "TASKS_API_BASE_URL",
+            "\"${localProps.getProperty("TASKS_API_BASE_URL", "https://share.tryapps.store/mock/teach")}\""
+        )
+        buildConfigField("String", "TASKS_API_TOKEN", "\"${localProps.getProperty("TASKS_API_TOKEN", "")}\"")
     }
 
     buildTypes {
@@ -34,6 +47,11 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
+    }
+    // android.util.Log tra ve gia tri mac dinh trong unit test thay vi nem loi
+    testOptions {
+        unitTests.isReturnDefaultValues = true
     }
 }
 
@@ -47,6 +65,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.work.runtime.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
@@ -60,5 +79,6 @@ dependencies {
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
+    implementation("com.google.firebase:firebase-messaging")
     implementation("com.google.android.gms:play-services-auth:21.3.0")
 }
