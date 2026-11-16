@@ -5,6 +5,7 @@ import com.example.btvn_tuan4.model.AuthUser
 import com.example.btvn_tuan4.model.SubTask
 import com.example.btvn_tuan4.model.TodoTask
 import com.example.btvn_tuan4.network.TaskApiService
+import com.example.btvn_tuan4.notification.ReminderScheduler
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
@@ -29,7 +30,10 @@ interface ITaskRepository {
 }
 
 // Trien khai Repository goi truc tiep REST API (/mock/teach/tasks) va dong bo Firestore
-class FirestoreTaskRepository : ITaskRepository {
+// reminderScheduler = null (mac dinh) thi khong len lich nhac, giu nguyen cac cho dang goi
+class FirestoreTaskRepository(
+    private val reminderScheduler: ReminderScheduler? = null
+) : ITaskRepository {
 
     // Khoi tao Firestore an toan
     private val firestore by lazy {
@@ -230,7 +234,9 @@ class FirestoreTaskRepository : ITaskRepository {
     // 2. Goi API that GET /mock/teach/tasks/{id} khi mo man hinh Chi tiet
     override suspend fun fetchTaskDetailFromApi(userId: String, taskId: String): Result<TodoTask> {
         val apiResult = TaskApiService.fetchTaskById(taskId)
-        val localTask = _tasksFlow.value.find { it.id == taskId }
+        // Mo tu thong bao (app vua khoi dong) thi danh sach trong bo nho con rong: doc task tu Firestore,
+        // vi API mock khong luu task nguoi dung tu them (GET tra 404)
+        val localTask = _tasksFlow.value.find { it.id == taskId } ?: readTaskFromFirestore(userId, taskId)
 
         return if (localTask != null) {
             val mergedTask = apiResult.getOrNull()?.let { fromApi ->
@@ -243,6 +249,19 @@ class FirestoreTaskRepository : ITaskRepository {
             Result.success(mergedTask)
         } else {
             apiResult
+        }
+    }
+
+    // Doc 1 task tu users/{uid}/tasks/{taskId} (offline thi Firestore tu doc cache); loi thi tra null
+    private suspend fun readTaskFromFirestore(userId: String, taskId: String): TodoTask? {
+        val db = firestore ?: return null
+        return try {
+            val doc = db.collection("users").document(userId.ifEmpty { "default_user" })
+                .collection("tasks").document(taskId).get().await()
+            if (doc.exists()) documentToTodoTask(doc) else null
+        } catch (e: Exception) {
+            Log.w("FirestoreTaskRepo", "Không đọc được task $taskId từ Firestore: ${e.message}")
+            null
         }
     }
 
@@ -262,6 +281,7 @@ class FirestoreTaskRepository : ITaskRepository {
 
         // Goi POST /mock/teach/tasks
         TaskApiService.createTaskOnApi(taskWithId)
+        reminderScheduler?.schedule(validUserId, taskWithId)
 
         return try {
             if (db != null) {
@@ -304,6 +324,8 @@ class FirestoreTaskRepository : ITaskRepository {
 
         // 2. Goi PATCH /mock/teach/tasks/{id}
         TaskApiService.patchTaskOnApi(task.id, task)
+        // Lap lich lai (hoac huy neu da hoan thanh / tat nhac); updateTaskStatus cung di qua day
+        reminderScheduler?.schedule(validUserId, task)
 
         // 3. Dong bo len Cloud Firestore
         return try {
@@ -332,6 +354,7 @@ class FirestoreTaskRepository : ITaskRepository {
 
         // Goi DELETE /mock/teach/tasks/{id}
         TaskApiService.deleteTaskOnApi(taskId)
+        reminderScheduler?.cancel(taskId)
 
         return try {
             if (db != null) {

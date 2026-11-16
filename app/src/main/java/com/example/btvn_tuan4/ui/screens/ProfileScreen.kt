@@ -12,9 +12,13 @@ import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -26,6 +30,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.btvn_tuan4.model.AuthUser
+import androidx.work.WorkManager
+import com.example.btvn_tuan4.notification.DeviceTokenRepository
+import com.example.btvn_tuan4.notification.FirestoreNotificationSettingsRepository
+import com.example.btvn_tuan4.notification.ReminderScheduler
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import com.example.btvn_tuan4.repository.AuthRepository
 import com.example.btvn_tuan4.repository.FirestoreTaskRepository
 import com.example.btvn_tuan4.repository.IAuthRepository
@@ -49,6 +59,20 @@ fun ProfileScreen(
     val completedCount = taskList.count { it.isCompleted }
     val pendingCount = taskList.count { !it.isCompleted }
     val progressPercent = if (taskList.isNotEmpty()) (completedCount * 100 / taskList.size) else 0
+
+    // null = dang tai; loi doc thi coi nhu bat (mac dinh cua opt-in)
+    val settingsRepository = remember { FirestoreNotificationSettingsRepository() }
+    val scope = rememberCoroutineScope()
+    var remindersEnabled by remember { mutableStateOf<Boolean?>(null) }
+    LaunchedEffect(authUser.uid) {
+        remindersEnabled = runCatching { settingsRepository.isTaskRemindersEnabled(authUser.uid) }.getOrDefault(true)
+    }
+
+    // Monitoring: so lich nhac dang cho trong WorkManager
+    val reminderWork by remember {
+        WorkManager.getInstance(context.applicationContext).getWorkInfosByTagFlow(ReminderScheduler.TAG)
+    }.collectAsState(initial = emptyList())
+    val pendingReminders = reminderWork.count { !it.state.isFinished }
 
     Scaffold(
         containerColor = Color(0xFFF8FAFC),
@@ -288,6 +312,52 @@ fun ProfileScreen(
                         }
                     }
                 }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Cai dat opt-in nhac viec, luu tai users/{uid}/notificationSettings/default
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 18.dp, vertical = 6.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = "Nhắc việc trước hạn",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = UthColors.TextPrimary
+                            )
+                            Text(
+                                text = "Đang chờ nhắc: $pendingReminders",
+                                fontSize = 12.sp,
+                                color = UthColors.TextSecondary
+                            )
+                        }
+                        Switch(
+                            checked = remindersEnabled ?: true,
+                            enabled = remindersEnabled != null,
+                            onCheckedChange = { checked ->
+                                remindersEnabled = checked
+                                scope.launch {
+                                    runCatching { settingsRepository.setTaskRemindersEnabled(authUser.uid, checked) }
+                                        .onFailure {
+                                            remindersEnabled = !checked
+                                            Toast.makeText(context, "Không lưu được cài đặt", Toast.LENGTH_SHORT).show()
+                                        }
+                                }
+                            }
+                        )
+                    }
+                }
             }
 
             // Nut dang xuat tai khoan
@@ -299,9 +369,17 @@ fun ProfileScreen(
             ) {
                 OutlinedButton(
                     onClick = {
-                        authRepository.signOut()
-                        Toast.makeText(context, "Đã đăng xuất thành công!", Toast.LENGTH_SHORT).show()
-                        onSignOut()
+                        scope.launch {
+                            // Go token FCM khi con quyen ghi, roi huy lich nhac cua user cu tren may nay.
+                            // Offline thi lenh xoa cho server mai, nen gioi han 3 giay de van dang xuat duoc
+                            withTimeoutOrNull(3_000) {
+                                runCatching { DeviceTokenRepository().unregisterCurrentDevice(authUser.uid) }
+                            }
+                            ReminderScheduler.cancelAll(context)
+                            authRepository.signOut()
+                            Toast.makeText(context, "Đã đăng xuất thành công!", Toast.LENGTH_SHORT).show()
+                            onSignOut()
+                        }
                     },
                     modifier = Modifier
                         .fillMaxWidth()
