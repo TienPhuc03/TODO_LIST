@@ -1,0 +1,10 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Moi user chi doc va ghi du lieu cua chinh minh:
+    // tasks, notificationSettings, notificationLog, rateLimits, devices, notificationQueue
+    match /users/{uid}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}
