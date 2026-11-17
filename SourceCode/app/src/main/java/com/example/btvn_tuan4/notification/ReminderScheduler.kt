@@ -21,7 +21,6 @@ const val REMINDER_LEAD_MINUTES = 15
 val VN_TIME_ZONE: TimeZone = TimeZone.getTimeZone("Asia/Ho_Chi_Minh")
 
 // Ham thuan: tinh thoi diem nhac (epoch ms) tu date "yyyy-MM-dd" + time "HH:mm" theo gio VN.
-// Tra null neu khong parse duoc (vd du lieu cu "Hôm nay"), nguoi goi bo qua thay vi crash
 fun computeReminderAt(date: String, time: String, leadMinutes: Int = REMINDER_LEAD_MINUTES): Long? {
     val format = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US).apply {
         timeZone = VN_TIME_ZONE
