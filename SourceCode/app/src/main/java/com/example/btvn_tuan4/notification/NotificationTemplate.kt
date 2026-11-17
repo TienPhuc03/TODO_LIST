@@ -2,7 +2,7 @@ package com.example.btvn_tuan4.notification
 
 data class RenderedNotification(val title: String, val body: String)
 
-// Mau thong bao voi placeholder dang {KEY} (Chuong 10: Template)
+// Mau thong bao voi placeholder dang {KEY}
 data class NotificationTemplate(val title: String, val body: String) {
 
     // Thay placeholder bang gia tri; placeholder thieu gia tri thanh chuoi rong, khong de sot {...}
